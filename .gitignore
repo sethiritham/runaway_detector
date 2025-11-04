@@ -1,0 +1,5 @@
+# Datasets, logs, and saved models
+data/
+
+# VS Code specific settings
+.vscode/
