@@ -1,4 +1,3 @@
-import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
 import cv2 as cv
@@ -14,8 +13,9 @@ import torchvision.transforms as transform
 import torchvision.transforms.functional as TF
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
-IMAGE_HEIGHT = 256
-IMAGE_WIDTH = 256
+print(f"USING DEVICE {device}")
+IMAGE_HEIGHT = 288
+IMAGE_WIDTH = 512
 
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels, mid_channels = None):

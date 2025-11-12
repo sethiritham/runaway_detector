@@ -18,12 +18,11 @@ class RunwayDataset(Dataset):
         img_path = os.path.join(self.img_dir, self.images[index])
         mask_path = os.path.join(self.mask_dir, self.images[index].replace(".png", "_mask.png"))
         image = np.array(Image.open(img_path).convert("RGB"))
-        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
-        mask[mask == 255.0] = 1.0
+        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32) / 255.0
 
 
         if self.transform is not None:
-            augmentations = self.transform(image, mask)
+            augmentations = self.transform(image=image, mask =mask)
             image = augmentations["image"]
             mask = augmentations["mask"]
             

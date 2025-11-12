@@ -1,5 +1,8 @@
 # Datasets, logs, and saved models
 data/
-
+saved_images/
+models/
+Scripts/
+__pycache__/
 # VS Code specific settings
 .vscode/
