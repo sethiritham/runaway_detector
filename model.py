@@ -11,6 +11,7 @@ from torchvision.io import decode_image
 from torch.utils.data import dataloader
 import torchvision.transforms as transform
 import torchvision.transforms.functional as TF
+import torchvision.models as models
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
 print(f"USING DEVICE {device}")
@@ -80,15 +81,19 @@ class UNET(nn.Module):
         return self.final_conv(x)
 
 
+class RunwayRegressor(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.backbone = models.resnet18(pretrained = True)
+        in_features = self.backbone.fc.in_features
 
-def test():
-    x = torch.randn((3, 1, 160, 160))
-    model = UNET(in_channels=1, out_channels=1)
-    preds = model(x)
-    print(preds.shape)
-    print(x.shape)
-    assert preds.shape == x.shape
+        self.backbone.fc = nn.Sequential(
+            nn.Linear(in_features,256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 12),
+            nn.Sigmoid()
+        )
 
-
-if __name__ == "__main__":
-    test()
+        def forward(self, x):
+            return self.backbone(x)
