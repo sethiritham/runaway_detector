@@ -1,5 +1,4 @@
-# **✈️ AI Runway Detector (Dual-Model Architecture)
-**
+# **✈️ AI Runway Detector (Dual-Model Architecture)**
 A robust computer vision system for autonomous aircraft landing guidance. This project utilizes a Dual-Model Architecture to detect both the safe landing area (Segmentation) and the precise geometric runway lines (Regression) in real-time.
 
 ## 🌟 Features
@@ -92,7 +91,7 @@ Output: 12 Coordinates (Start/End points for Left, Right, Center lines) + 3 Pres
 
 Loss Function: Masked Wing Loss (for precision) + BCE (for presence classification).
 
-##📂 Directory Structure
+## 📂 Directory Structure
 ```
 runway_detector/
 ├── app.py                  # Gradio inference application
@@ -122,3 +121,4 @@ Contributions are welcome! Please fork the repository and submit a Pull Request.
 This project is licensed under the MIT License.
 
 **Author: Rizzam**
+
