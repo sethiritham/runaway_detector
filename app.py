@@ -70,7 +70,7 @@ class RunwayRegressor(nn.Module):
     def __init__(self):
         super().__init__()
         # Use standard ResNet18
-        self.backbone = models.resnet18(pretrained=False) 
+        self.backbone = models.resnet18(pretrained=False)
         in_features = self.backbone.fc.in_features
 
         self.backbone.fc = nn.Sequential(
@@ -96,7 +96,7 @@ reg_model = RunwayRegressor().to(DEVICE)
 
 # Load Weights (Ensure these files exist in your HF Space)
 try:
-    unet_model.load_state_dict(torch.load("best_unet.pth", map_location=DEVICE))
+    unet_model.load_state_dict(torch.load("models/best_unet.pth", map_location=DEVICE))
     print("UNet weights loaded.")
 except Exception as e:
     print(f"Error loading UNet: {e}")
@@ -118,87 +118,87 @@ def process_frame(frame):
     # UNet handles dynamic sizes, so 640x360 works for both.
     MODEL_W, MODEL_H = 640, 360
     h_orig, w_orig = frame.shape[:2]
-    
+
     img_resized = cv2.resize(frame, (MODEL_W, MODEL_H))
-    
+
     # 2. Preprocess (Normalize 0-1, CHW)
     # Note: Your notebook used image / 255.0 manually
     img_tensor = torch.tensor(img_resized).permute(2,0,1).float() / 255.0
     img_tensor = img_tensor.unsqueeze(0).to(DEVICE)
-    
+
     with torch.no_grad():
         # --- Run UNet (Area) ---
         mask_logits = unet_model(img_tensor)
         # Sigmoid because it was trained with BCEWithLogits
         mask_prob = torch.sigmoid(mask_logits).squeeze().cpu().numpy()
         mask_binary = (mask_prob > 0.5).astype(np.uint8)
-        
+
         # --- Run Regressor (Lines) ---
         coords = reg_model(img_tensor).cpu().numpy()[0]
 
     # 3. Visualization
-    
+
     # A. Draw Area (Green Mask)
     # Create green overlay where mask is 1
     green_mask = np.zeros_like(img_resized)
     green_mask[mask_binary == 1] = [0, 255, 0] # RGB Green
-    
+
     # Blend: 70% Original, 30% Green
     overlay = cv2.addWeighted(img_resized, 1.0, green_mask, 0.3, 0)
-    
+
     # B. Draw Lines (Red, Blue, Green)
     # Denormalize coordinates
     c = coords.copy()
     c[0::2] *= MODEL_W # X
     c[1::2] *= MODEL_H # Y
     c = c.astype(int)
-    
+
     colors = [(255, 0, 0), (0, 0, 255), (0, 255, 0)] # Left=Red, Right=Blue, Center=Green
-    
+
     for i in range(3):
         start_idx = i * 4
         # Draw thick lines
-        cv2.line(overlay, 
-                 (c[start_idx], c[start_idx+1]), 
-                 (c[start_idx+2], c[start_idx+3]), 
+        cv2.line(overlay,
+                 (c[start_idx], c[start_idx+1]),
+                 (c[start_idx+2], c[start_idx+3]),
                  colors[i], 3)
 
     # 4. Resize back to original video size (Optional, keeps quality)
     final_output = cv2.resize(overlay, (w_orig, h_orig))
-    
+
     return final_output
 
 def analyze_video(video_path):
     if video_path is None:
         return None
-        
+
     cap = cv2.VideoCapture(video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    
+
     # Gradio requires a file path for output
     output_path = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False).name
-    
+
     # Codec for MP4
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-    
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-        
+
         # OpenCV is BGR -> Convert to RGB
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
+
         # Inference
         processed_frame = process_frame(frame)
-        
+
         # Convert RGB -> BGR for VideoWriter
         processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
         out.write(processed_frame)
-        
+
     cap.release()
     out.release()
     return output_path
@@ -212,7 +212,7 @@ iface = gr.Interface(
     outputs=gr.Video(label="AI Analysis"),
     title="✈️ Runway AI Assistant",
     description="Detects Runway Area (Green) and Center/Edge Lines (Red/Blue/Green) using ResNet18 + U-Net.",
-    examples=[] 
+    examples=[]
 )
 
 if __name__ == "__main__":
